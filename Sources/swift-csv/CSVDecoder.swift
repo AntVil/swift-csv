@@ -2,14 +2,25 @@ import Foundation
 
 public struct CSVDecoder: Sendable {
     var userInfo: [CodingUserInfoKey: Sendable] = [:]
+    var hasHeaderRow: Bool = true
+    var rowSeparator: Character = "\n"
+    var columnSeparator: Character = ","
+    var trimCharacter: Character = " "
     var nilDecodingStrategy: NilDecodingStrategy = .empty
     var boolDecodingStrategy: BoolDecodingStrategy = .trueOrFalse
 
     public init() {}
 
     public func decode<T: Decodable>(_: T.Type, from csv: String) throws -> T {
+        let parsedCsv = try ParsedCSV(
+            from: csv,
+            hasHeaderRow: self.hasHeaderRow,
+            rowSeparator: self.rowSeparator,
+            columnSeparator: self.columnSeparator,
+            trimCharacter: self.trimCharacter
+        )
         let decoder = CSVContainerDecoder(
-            csv: try ParsedCSV(from: csv),
+            csv: parsedCsv,
             userInfo: self.userInfo,
             options: CSVDecoderOptions(
                 nilDecodingStrategy: self.nilDecodingStrategy,
