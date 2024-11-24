@@ -5,7 +5,9 @@ public struct CSVDecoder: Sendable {
     var nilDecodingStrategy: NilDecodingStrategy = .empty
     var boolDecodingStrategy: BoolDecodingStrategy = .trueOrFalse
 
-    func decode<T: Decodable>(_: T.Type, from csv: String) throws -> T {
+    public init() {}
+
+    public func decode<T: Decodable>(_: T.Type, from csv: String) throws -> T {
         let decoder = CSVContainerDecoder(
             csv: try ParsedCSV(from: csv),
             userInfo: self.userInfo,
