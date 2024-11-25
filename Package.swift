@@ -7,17 +7,17 @@ let package = Package(
     name: "swift-csv",
     products: [
         .library(
-            name: "swift-csv",
-            targets: ["swift-csv"]
+            name: "swiftCsv",
+            targets: ["swiftCsv"]
         ),
     ],
     targets: [
         .target(
-            name: "swift-csv"
+            name: "swiftCsv"
         ),
         .testTarget(
-            name: "swift-csvTests",
-            dependencies: ["swift-csv"]
+            name: "swiftCsvTests",
+            dependencies: ["swiftCsv"]
         ),
     ]
 )

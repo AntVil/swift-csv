@@ -308,10 +308,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         let result: Bool
         switch self.options.nilDecodingStrategy {
         case .never: result = false
-        case .empty: result = column[currentIndex] != ""
-        case .custom(let function): result = function(column[currentIndex])
+        case .empty: result = self.column[self.currentIndex] != ""
+        case .custom(let function): result = function(self.column[self.currentIndex])
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -322,21 +322,21 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         let result: Bool
         switch self.options.boolDecodingStrategy {
         case .trueOrFalse:
-            switch column[currentIndex] {
+            switch self.column[self.currentIndex] {
             case "true": result = true
             case "false": result = false
-            default: throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value from \(column[currentIndex])"))
+            default: throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value from \(self.column[self.currentIndex])"))
             }
         case .zeroOrOne:
-            switch column[currentIndex] {
+            switch self.column[self.currentIndex] {
             case "1": result = true
             case "0": result = false
-            default: throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value from \(column[currentIndex])"))
+            default: throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value from \(self.column[self.currentIndex])"))
             }
         case .custom(let function):
-            result = function(column[currentIndex])
+            result = function(self.column[self.currentIndex])
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -344,8 +344,8 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(String.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'String' value because already at end"))
         }
-        let result = String(column[currentIndex])
-        currentIndex += 1
+        let result = String(self.column[self.currentIndex])
+        self.currentIndex += 1
         return result
     }
 
@@ -353,10 +353,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Float.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Float' value because already at end"))
         }
-        guard let result = Float(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Float.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Float'."))
+        guard let result = Float(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Float.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Float'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -364,10 +364,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Double.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Double' value because already at end"))
         }
-        guard let result = Double(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Double.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Double'."))
+        guard let result = Double(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Double.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Double'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -375,10 +375,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Int.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Int' value because already at end"))
         }
-        guard let result = Int(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Int.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Int'."))
+        guard let result = Int(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Int.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Int'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -386,10 +386,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Int64.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Int64' value because already at end"))
         }
-        guard let result = Int64(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Int64.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Int64'."))
+        guard let result = Int64(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Int64.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Int64'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -397,10 +397,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Int32.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Int32' value because already at end"))
         }
-        guard let result = Int32(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Int32.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Int32'."))
+        guard let result = Int32(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Int32.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Int32'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -408,10 +408,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Int16.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Int16' value because already at end"))
         }
-        guard let result = Int16(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Int16.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Int16'."))
+        guard let result = Int16(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Int16.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Int16'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -419,10 +419,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(Int8.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Int8' value because already at end"))
         }
-        guard let result = Int8(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(Int8.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'Int8'."))
+        guard let result = Int8(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(Int8.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Int8'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -430,10 +430,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(UInt.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'UInt' value because already at end"))
         }
-        guard let result = UInt(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(UInt.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'UInt'."))
+        guard let result = UInt(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(UInt.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'UInt'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -441,10 +441,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(UInt64.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'UInt64' value because already at end"))
         }
-        guard let result = UInt64(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(UInt64.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'UInt64'."))
+        guard let result = UInt64(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(UInt64.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'UInt64'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -452,10 +452,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(UInt32.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'UInt32' value because already at end"))
         }
-        guard let result = UInt32(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(UInt32.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'UInt32'."))
+        guard let result = UInt32(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(UInt32.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'UInt32'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -463,10 +463,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(UInt16.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'UInt16' value because already at end"))
         }
-        guard let result = UInt16(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(UInt16.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'UInt16'."))
+        guard let result = UInt16(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(UInt16.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'UInt16'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -474,10 +474,10 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(UInt8.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'UInt8' value because already at end"))
         }
-        guard let result = UInt8(column[currentIndex]) else {
-            throw DecodingError.typeMismatch(UInt8.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(column[currentIndex])' to 'UInt8'."))
+        guard let result = UInt8(self.column[self.currentIndex]) else {
+            throw DecodingError.typeMismatch(UInt8.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'UInt8'."))
         }
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -485,9 +485,9 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'any Decodable' value because already at end"))
         }
-        let decoder = CSVValueContainerDecoder(value: column[currentIndex], codingPath: self.codingPath, userInfo: self.userInfoSendable)
+        let decoder = CSVValueContainerDecoder(value: self.column[self.currentIndex], key: self.key, index: self.currentIndex, userInfo: self.userInfoSendable)
         let result = try T.init(from: decoder)
-        currentIndex += 1
+        self.currentIndex += 1
         return result
     }
 
@@ -510,16 +510,19 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
     }
 }
 
-fileprivate struct CSVValueContainerDecoder: Decoder {
+fileprivate struct CSVValueContainerDecoder: Decoder, SingleValueDecodingContainer {
     let value: Substring
-    let codingPath: [any CodingKey]
+    let key: any CodingKey
+    let index: Int
     let userInfoSendable: [CodingUserInfoKey: Sendable]
 
+    var codingPath: [any CodingKey] { [key, CSVColumnContainer.CSVRowIndex(intValue: index)] }
     var userInfo: [CodingUserInfoKey: Any] { self.userInfoSendable }
 
-    init(value: Substring, codingPath: [any CodingKey], userInfo: [CodingUserInfoKey: Sendable]) {
+    init(value: Substring, key: any CodingKey, index: Int, userInfo: [CodingUserInfoKey: Sendable]) {
         self.value = value
-        self.codingPath = codingPath
+        self.key = key
+        self.index = index
         self.userInfoSendable = userInfo
     }
 
@@ -538,13 +541,8 @@ fileprivate struct CSVValueContainerDecoder: Decoder {
     }
 
     func singleValueContainer() throws -> any SingleValueDecodingContainer {
-        return CSVValueContainer(value: self.value, codingPath: self.codingPath)
+        return self //CSVValueContainer(value: self.value, codingPath: self.codingPath)
     }
-}
-
-fileprivate struct CSVValueContainer: SingleValueDecodingContainer {
-    let value: Substring
-    let codingPath: [any CodingKey]
 
     func decodeNil() -> Bool {
         return value == ""

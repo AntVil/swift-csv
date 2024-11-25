@@ -1,5 +1,5 @@
 public final class ParsedCSV: Sendable {
-    private let values: [Substring]
+    private let values: ContiguousArray<Substring>
     public let hasHeaderRow: Bool
     public let columnCount: Int
 
@@ -33,7 +33,7 @@ public final class ParsedCSV: Sendable {
         var endSubStringIndex = csv.startIndex
         var state = State.preValuePadding
 
-        var table = TableBuilder()
+        var table = TableBuilder(expectedTotalValueCount: csv.count / 5)
 
         for (index, character) in zip(csv.indices, csv) {
             switch state {
@@ -153,21 +153,26 @@ public final class ParsedCSV: Sendable {
     }
 
     fileprivate struct TableBuilder {
-        private(set) var values = [Substring]()
+        private(set) var values = ContiguousArray<Substring>()// [Substring]()
         private(set) var expectedColumnCount: Int?
         private var columnCount = 0
 
-        @inlinable
+        init(expectedTotalValueCount: Int) {
+            self.values.reserveCapacity(expectedTotalValueCount)
+        }
+
+        // @inline(__always)
         mutating func addValue(_ value: Substring) {
             self.values.append(value)
         }
 
+        // @inline(__always)
         @inlinable
         mutating func finishColumn() {
             self.columnCount += 1
         }
 
-        @inlinable
+        // @inline(__always)
         mutating func finishRow() throws {
             self.columnCount += 1
 
@@ -181,13 +186,13 @@ public final class ParsedCSV: Sendable {
             self.columnCount = 0
         }
 
-        @inlinable
+        // @inline(__always)
         mutating func addColumn(_ value: Substring) throws {
             self.values.append(value)
             self.finishColumn()
         }
 
-        @inlinable
+        // @inline(__always)
         mutating func addRow(_ value: Substring) throws {
             self.values.append(value)
             try finishRow()
