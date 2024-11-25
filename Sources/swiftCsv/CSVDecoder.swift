@@ -1,13 +1,13 @@
 import Foundation
 
 public struct CSVDecoder: Sendable {
-    var userInfo: [CodingUserInfoKey: Sendable] = [:]
-    var hasHeaderRow: Bool = true
-    var rowSeparator: Character = "\n"
-    var columnSeparator: Character = ","
-    var trimCharacter: Character = " "
-    var nilDecodingStrategy: NilDecodingStrategy = .empty
-    var boolDecodingStrategy: BoolDecodingStrategy = .trueOrFalse
+    public var userInfo: [CodingUserInfoKey: Sendable] = [:]
+    public var hasHeaderRow: Bool = true
+    public var rowSeparator: Character = "\n"
+    public var columnSeparator: Character = ","
+    public var trimCharacter: Character = " "
+    public var nilDecodingStrategy: NilDecodingStrategy = .empty
+    public var boolDecodingStrategy: BoolDecodingStrategy = .trueOrFalse
 
     public init() {}
 
