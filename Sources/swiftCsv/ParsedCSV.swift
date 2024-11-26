@@ -116,10 +116,10 @@ public final class ParsedCSV: Sendable {
 
         switch state {
         case .preValuePadding:
-            break
+            try table.finishRow()
         case .readingValue:
             let value = csv[startSubStringIndex ..< csv.endIndex]
-            try table.addRow(value)
+            try table.addColumn(value)
         case .readEscapedStart:
             throw CSVParserError.unexpectedEndOfCsv
         case .readingEscapedValue:
@@ -130,7 +130,7 @@ public final class ParsedCSV: Sendable {
             break
         case .postValuePaddingUnaccounted:
             let value = csv[startSubStringIndex ..< endSubStringIndex]
-            try table.addRow(value)
+            try table.addColumn(value)
         }
 
         guard let columnCount = table.expectedColumnCount else {

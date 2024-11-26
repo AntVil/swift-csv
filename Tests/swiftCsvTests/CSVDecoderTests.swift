@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import swift_csv
+@testable import swiftCsv
 
 public final class CSVDecoderTests: XCTestCase {
     func testDecode() throws {
@@ -170,5 +170,43 @@ public final class CSVDecoderTests: XCTestCase {
         let result = try decoder.decode(CSV.self, from: csv)
 
         XCTAssertEqual(result.row1, ["1,4,7", "2,\n3", "3,6,9"])
+    }
+
+    func testDecodeOptionalColumn() throws {
+        let csv = """
+        row1
+        1
+        """
+
+        struct CSV: Decodable {
+            let row1: [String]?
+            let row2: [String]?
+        }
+
+        let decoder = CSVDecoder()
+
+        let result = try decoder.decode(CSV.self, from: csv)
+
+        XCTAssertEqual(result.row1, ["1"])
+        XCTAssertEqual(result.row2, nil)
+    }
+
+    func testDecodeOptionalValues() throws {
+        let csv = """
+        row1
+        1
+
+        3
+        """
+
+        struct CSV: Decodable {
+            let row1: [String?]
+        }
+
+        let decoder = CSVDecoder()
+
+        let result = try decoder.decode(CSV.self, from: csv)
+
+        XCTAssertEqual(result.row1, ["1", nil, "3"])
     }
 }

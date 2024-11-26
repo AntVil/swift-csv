@@ -34,19 +34,51 @@ public struct CSVDecoder: Sendable {
     public enum NilDecodingStrategy: Sendable {
         case never
         case empty
-        case custom(@Sendable (Substring) -> Bool)
+        case null
+        case custom(nil: String)
+
+        var nilLiteral: Substring? {
+            switch self {
+            case .never: return nil
+            case .empty: return ""
+            case .null: return "null"
+            case .custom(let literal): return Substring(literal)
+            }
+        }
     }
 
     public enum BoolDecodingStrategy: Sendable {
         case trueOrFalse
         case zeroOrOne
-        case custom(@Sendable (Substring) -> Bool)
+        case custom(true: String, false: String)
+
+        var trueLiteral: Substring {
+            switch self {
+            case .trueOrFalse: return "true"
+            case .zeroOrOne: return "1"
+            case .custom(let literal, _): return Substring(literal)
+            }
+        }
+        var falseLiteral: Substring {
+            switch self {
+            case .trueOrFalse: return "false"
+            case .zeroOrOne: return "0"
+            case .custom(_, let literal): return Substring(literal)
+            }
+        }
     }
 }
 
 fileprivate struct CSVDecoderOptions {
-    let nilDecodingStrategy: CSVDecoder.NilDecodingStrategy
-    let boolDecodingStrategy: CSVDecoder.BoolDecodingStrategy
+    let nilLiteral: Substring?
+    let trueLiteral: Substring
+    let falseLiteral: Substring
+
+    init(nilDecodingStrategy: CSVDecoder.NilDecodingStrategy, boolDecodingStrategy: CSVDecoder.BoolDecodingStrategy) {
+        self.nilLiteral = nilDecodingStrategy.nilLiteral
+        self.trueLiteral = boolDecodingStrategy.trueLiteral
+        self.falseLiteral = boolDecodingStrategy.falseLiteral
+    }
 }
 
 fileprivate final class CSVContainerDecoder: Decoder, Sendable {
@@ -86,7 +118,12 @@ fileprivate struct CSVContainer<Key: CodingKey>: KeyedDecodingContainerProtocol 
     let decoder: CSVContainerDecoder
 
     let codingPath: [any CodingKey] = []
-    let allKeys: [Key] = []
+    var allKeys: [Key] {
+        guard let header = decoder.csv.header else {
+            return (0 ..< decoder.csv.columnCount).compactMap { Key(intValue: $0) }
+        }
+        return header.compactMap { Key(stringValue: String($0)) }
+    }
 
     func decode(_: Bool.Type, forKey key: Key) throws -> Bool {
         throw DecodingError.typeMismatch(
@@ -305,12 +342,7 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
             throw DecodingError.valueNotFound(Never.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'nil' value because already at end"))
         }
 
-        let result: Bool
-        switch self.options.nilDecodingStrategy {
-        case .never: result = false
-        case .empty: result = self.column[self.currentIndex] != ""
-        case .custom(let function): result = function(self.column[self.currentIndex])
-        }
+        let result = self.column[self.currentIndex] == self.options.nilLiteral
         self.currentIndex += 1
         return result
     }
@@ -320,21 +352,12 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
             throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value because already at end"))
         }
         let result: Bool
-        switch self.options.boolDecodingStrategy {
-        case .trueOrFalse:
-            switch self.column[self.currentIndex] {
-            case "true": result = true
-            case "false": result = false
-            default: throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value from \(self.column[self.currentIndex])"))
-            }
-        case .zeroOrOne:
-            switch self.column[self.currentIndex] {
-            case "1": result = true
-            case "0": result = false
-            default: throw DecodingError.valueNotFound(Bool.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'Bool' value from \(self.column[self.currentIndex])"))
-            }
-        case .custom(let function):
-            result = function(self.column[self.currentIndex])
+        if self.column[self.currentIndex] == self.options.trueLiteral {
+            result = true
+        } else if self.column[self.currentIndex] == self.options.falseLiteral {
+            result = false
+        } else {
+            throw DecodingError.typeMismatch(Bool.self, DecodingError.Context(codingPath: [key], debugDescription: "Could not decode '\(self.column[self.currentIndex])' to 'Bool'."))
         }
         self.currentIndex += 1
         return result
@@ -485,7 +508,7 @@ fileprivate struct CSVColumnContainer: UnkeyedDecodingContainer {
         guard !isAtEnd else {
             throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: self.codingPath, debugDescription: "Cannot decode 'any Decodable' value because already at end"))
         }
-        let decoder = CSVValueContainerDecoder(value: self.column[self.currentIndex], key: self.key, index: self.currentIndex, userInfo: self.userInfoSendable)
+        let decoder = CSVValueContainerDecoder(value: self.column[self.currentIndex], key: self.key, index: self.currentIndex, userInfo: self.userInfoSendable, options: self.options)
         let result = try T.init(from: decoder)
         self.currentIndex += 1
         return result
@@ -515,15 +538,17 @@ fileprivate struct CSVValueContainerDecoder: Decoder, SingleValueDecodingContain
     let key: any CodingKey
     let index: Int
     let userInfoSendable: [CodingUserInfoKey: Sendable]
+    let options: CSVDecoderOptions
 
     var codingPath: [any CodingKey] { [key, CSVColumnContainer.CSVRowIndex(intValue: index)] }
     var userInfo: [CodingUserInfoKey: Any] { self.userInfoSendable }
 
-    init(value: Substring, key: any CodingKey, index: Int, userInfo: [CodingUserInfoKey: Sendable]) {
+    init(value: Substring, key: any CodingKey, index: Int, userInfo: [CodingUserInfoKey: Sendable], options: CSVDecoderOptions) {
         self.value = value
         self.key = key
         self.index = index
         self.userInfoSendable = userInfo
+        self.options = options
     }
 
     func container<Key: CodingKey>(keyedBy: Key.Type) throws -> KeyedDecodingContainer<Key> {
@@ -541,15 +566,21 @@ fileprivate struct CSVValueContainerDecoder: Decoder, SingleValueDecodingContain
     }
 
     func singleValueContainer() throws -> any SingleValueDecodingContainer {
-        return self //CSVValueContainer(value: self.value, codingPath: self.codingPath)
+        return self
     }
 
     func decodeNil() -> Bool {
-        return value == ""
+        return self.value == self.options.nilLiteral
     }
 
     func decode(_ type: Bool.Type) throws -> Bool {
-        return value != ""
+        if self.value == self.options.trueLiteral {
+            return true
+        }
+        if self.value == self.options.falseLiteral {
+            return false
+        }
+        throw DecodingError.typeMismatch(Bool.self, DecodingError.Context(codingPath: [], debugDescription: "Value '\(self.value)' was not a valid 'Bool'"))
     }
 
     func decode(_ type: String.Type) throws -> String {
@@ -641,9 +672,6 @@ fileprivate struct CSVValueContainerDecoder: Decoder, SingleValueDecodingContain
     }
 
     func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
-        throw DecodingError.valueNotFound(
-            Array<any Decodable>.self,
-            DecodingError.Context(codingPath: [], debugDescription: "Unsupported decoding method 'singleValueContainer' for csv decoder.")
-        )
+        return try T.init(from: self)
     }
 }
