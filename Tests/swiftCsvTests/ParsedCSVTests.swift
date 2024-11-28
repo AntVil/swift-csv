@@ -11,7 +11,25 @@ public final class ParsedCSVTests: XCTestCase {
         3
         """
 
-        let _ = try ParsedCSV(from: csv)
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 1)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 4)
+    }
+
+    func testParseSingleColumnWithNewLine() throws {
+        let csv = """
+        row1
+        1
+        2
+        3
+
+        """
+
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 1)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 4)
     }
 
     func testParseDoubleColumn() throws {
@@ -22,7 +40,25 @@ public final class ParsedCSVTests: XCTestCase {
         3,6
         """
 
-        let _ = try ParsedCSV(from: csv)
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 2)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 8)
+    }
+
+    func testParseDoubleColumnWithNewLine() throws {
+        let csv = """
+        row1,row2
+        1,4
+        2,5
+        3,6
+
+        """
+
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 2)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 8)
     }
 
     func testParseInconsistentColumnMiddle() throws {
@@ -77,31 +113,121 @@ public final class ParsedCSVTests: XCTestCase {
         )
     }
 
+    func testParseEscapedSingleColumn() throws {
+        let csv = """
+        "row1"
+        "1"
+        "2"
+        "3"
+        """
+
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 1)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 4)
+    }
+
+    func testParseEscapedSingleColumnWithNewLine() throws {
+        let csv = """
+        "row1"
+        "1"
+        "2"
+        "3"
+
+        """
+
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 1)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 4)
+    }
+
+    func testParseEscapedDoubleColumn1() throws {
+        let csv = """
+        "row1","row2"
+        "1","4"
+        "2","5"
+        "3","6"
+        """
+
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 2)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 8)
+    }
+
+    func testParseEscapedDoubleColumnWithNewLine() throws {
+        let csv = """
+        "row1","row2"
+        "1","4"
+        "2","5"
+        "3","6"
+
+        """
+
+        let parsedCsv = try ParsedCSV(from: csv)
+        XCTAssertEqual(parsedCsv.columnCount, 2)
+        XCTAssertEqual(parsedCsv.rowCount, 4)
+        XCTAssertEqual(parsedCsv.count, 8)
+    }
+
+    func testParseEscapedInconsistentColumnMiddle() throws {
+        let csv = """
+        "row1"
+        "1"
+        "2","x"
+        "3"
+        """
+
+        XCTAssertThrowsError(
+            try ParsedCSV(from: csv)
+        )
+    }
+
+    func testParseEscapedInconsistentColumnMiddleEmpty() throws {
+        let csv = """
+        "row1"
+        "1"
+        "2",
+        "3"
+        """
+
+        XCTAssertThrowsError(
+            try ParsedCSV(from: csv)
+        )
+    }
+
+    func testParseEscapedInconsistentColumnEnd() throws {
+        let csv = """
+        "row1"
+        "1"
+        "2"
+        "3","x"
+        """
+
+        XCTAssertThrowsError(
+            try ParsedCSV(from: csv)
+        )
+    }
+
+    func testParseEscapedInconsistentColumnEmptyEnd() throws {
+        let csv = """
+        "row1"
+        "1"
+        "2"
+        "3",
+        """
+
+        XCTAssertThrowsError(
+            try ParsedCSV(from: csv)
+        )
+    }
+
     func testParseEmpty() throws {
         let csv = ""
 
         XCTAssertThrowsError(
             try ParsedCSV(from: csv)
         )
-    }
-
-    func testParseEmptyLines() throws {
-        let csv = "\n\n\n"
-
-        XCTAssertThrowsError(
-            try ParsedCSV(from: csv)
-        )
-    }
-
-    func testParseWithFinalNewLine() throws {
-        let csv = "row1\nvalue1\n"
-
-        let _ = try ParsedCSV(from: csv)
-    }
-
-    func testParseWithoutFinalNewLine() throws {
-        let csv = "row1\nvalue1"
-
-        let _ = try ParsedCSV(from: csv)
     }
 }

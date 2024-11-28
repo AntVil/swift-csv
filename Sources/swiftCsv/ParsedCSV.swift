@@ -3,9 +3,25 @@ public final class ParsedCSV: Sendable {
     public let hasHeaderRow: Bool
     public let columnCount: Int
 
+    /// Number of rows including header row
+    public var rowCount: Int {
+        guard columnCount != 0 else {
+            return 0
+        }
+        return self.values.count / self.columnCount
+    }
+
+    /// Total count of values (all rows with header * all columns)
+    public var count: Int {
+        return self.values.count
+    }
+
     public var header: [Substring]? {
         guard hasHeaderRow else {
             return nil
+        }
+        guard values.count >= columnCount else {
+            return []
         }
         return values[0 ..< columnCount].map { $0 }
     }
@@ -36,6 +52,8 @@ public final class ParsedCSV: Sendable {
         var table = TableBuilder(expectedTotalValueCount: csv.count / 5)
 
         for (index, character) in zip(csv.indices, csv) {
+            // print("state", state, "character", character)
+
             switch state {
             case .preValuePadding:
                 if character == rowSeparator {
@@ -91,6 +109,7 @@ public final class ParsedCSV: Sendable {
             case .postValuePadding:
                 if character == rowSeparator {
                     state = .preValuePadding
+                    table.finishColumn()
                     try table.finishRow()
                 } else if character == columnSeparator {
                     state = .preValuePadding
@@ -114,12 +133,14 @@ public final class ParsedCSV: Sendable {
             }
         }
 
+        print("state", state)
+
         switch state {
         case .preValuePadding:
-            try table.finishRow()
+            try table.finishTable()
         case .readingValue:
             let value = csv[startSubStringIndex ..< csv.endIndex]
-            try table.addColumn(value)
+            try table.addRow(value)
         case .readEscapedStart:
             throw CSVParserError.unexpectedEndOfCsv
         case .readingEscapedValue:
@@ -127,10 +148,13 @@ public final class ParsedCSV: Sendable {
         case .readingEscapingEnd:
             throw CSVParserError.unexpectedEndOfCsv
         case .postValuePadding:
+            table.finishColumn()
+            try table.finishRow()
+            try table.finishTable()
             break
         case .postValuePaddingUnaccounted:
             let value = csv[startSubStringIndex ..< endSubStringIndex]
-            try table.addColumn(value)
+            try table.addRow(value)
         }
 
         guard let columnCount = table.expectedColumnCount else {
@@ -161,40 +185,49 @@ public final class ParsedCSV: Sendable {
             self.values.reserveCapacity(expectedTotalValueCount)
         }
 
-        // @inline(__always)
         mutating func addValue(_ value: Substring) {
             self.values.append(value)
         }
 
-        // @inline(__always)
         @inlinable
         mutating func finishColumn() {
             self.columnCount += 1
         }
 
-        // @inline(__always)
         mutating func finishRow() throws {
-            self.columnCount += 1
-
             if let expectedColumnCount = self.expectedColumnCount {
                 guard expectedColumnCount == columnCount else {
                     throw CSVParserError.columnCountMismatch(expected: expectedColumnCount, got: columnCount)
                 }
             } else {
+                guard self.columnCount > 0 else {
+                    throw CSVParserError.emptyCsv
+                }
                 self.expectedColumnCount = self.columnCount
             }
             self.columnCount = 0
         }
 
         // @inline(__always)
+        mutating func finishTable() throws {
+            guard let lastValue = self.values.last, self.columnCount == 0 else {
+                throw CSVParserError.emptyCsv
+            }
+            if lastValue == "" {
+                _ = self.values.dropLast()
+            }
+        }
+
+        // @inline(__always)
         mutating func addColumn(_ value: Substring) throws {
             self.values.append(value)
-            self.finishColumn()
+            finishColumn()
         }
 
         // @inline(__always)
         mutating func addRow(_ value: Substring) throws {
             self.values.append(value)
+            finishColumn()
             try finishRow()
         }
     }
