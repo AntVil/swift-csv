@@ -52,8 +52,6 @@ public final class ParsedCSV: Sendable {
         var table = TableBuilder(expectedTotalValueCount: csv.count / 5)
 
         for (index, character) in zip(csv.indices, csv) {
-            // print("state", state, "character", character)
-
             switch state {
             case .preValuePadding:
                 if character == rowSeparator {
@@ -132,8 +130,6 @@ public final class ParsedCSV: Sendable {
                 }
             }
         }
-
-        print("state", state)
 
         switch state {
         case .preValuePadding:
